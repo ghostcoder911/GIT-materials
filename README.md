@@ -1,8 +1,8 @@
-# Git Mastery — From Basics to Advanced Workflows
+# Git Mastery - From Basics to Advanced Workflows
 
 ![Git Intro](./imgs/git_intro.png)
 
-Welcome to the **Git Mastery Study Guide** — a comprehensive, hands-on reference for developers, DevOps engineers, and anyone looking to master version control. Inspired by real-world development workflows and professional best practices.
+Welcome to the **Git Mastery Study Guide** - a comprehensive, hands-on reference for developers, DevOps engineers, and anyone looking to master version control. Inspired by real-world development workflows and professional best practices.
 
 ## Table of Contents
 
@@ -46,7 +46,7 @@ Welcome to the **Git Mastery Study Guide** — a comprehensive, hands-on referen
 ---
 
 <a name="module-01"></a>
-## Module 01 — Getting Started
+## Module 01 - Getting Started
 *Phase: Foundations*
 
 Git is a **Distributed Version Control System (DVCS)** created by Linus Torvalds in 2005 for Linux kernel development. Unlike older systems (SVN), every developer has a full copy of the repository history on their machine.
@@ -107,7 +107,7 @@ git status
 ---
 
 <a name="module-02"></a>
-## Module 02 — Git Basics
+## Module 02 - Git Basics
 *Phase: Foundations*
 
 <a name="module-02-tracking"></a>
@@ -182,7 +182,7 @@ git log -n 1
 ---
 
 <a name="module-03"></a>
-## Module 03 — Branching
+## Module 03 - Branching
 *Phase: Workflow*
 
 Branches are pointers to specific commits. They allow you to diverge from the main line of development and continue to do work without messing with that main line.
@@ -241,7 +241,7 @@ git switch main
 ---
 
 <a name="module-04"></a>
-## Module 04 — Merging & Rebasing
+## Module 04 - Merging & Rebasing
 *Phase: Workflow*
 
 Once you've finished work on a branch, you need to bring those changes back into your main line.
@@ -306,7 +306,7 @@ git commit -m "merge: resolve conflict in conflict.txt"
 ---
 
 <a name="module-05"></a>
-## Module 05 — Stashing & Cleaning
+## Module 05 - Stashing & Cleaning
 *Phase: Utility*
 
 <a name="module-05-stash"></a>
@@ -364,7 +364,7 @@ git stash pop
 ---
 
 <a name="module-06"></a>
-## Module 06 — Remotes & Collaboration
+## Module 06 - Remotes & Collaboration
 *Phase: Collaboration*
 
 Remotes are versions of your project that are hosted on the internet or network somewhere.
@@ -399,7 +399,7 @@ git push origin main
 ---
 
 <a name="module-07"></a>
-## Module 07 — Inspecting & Comparing
+## Module 07 - Inspecting & Comparing
 *Phase: Utility*
 
 <a name="module-07-show"></a>
@@ -433,7 +433,7 @@ git log --author="John Doe"
 ---
 
 <a name="module-08"></a>
-## Module 08 — Undoing Changes
+## Module 08 - Undoing Changes
 *Phase: Recovery*
 
 Git is very good at undoing mistakes. Depending on where the change is (Working Directory, Staging Area, or Repository), there's a command for it.
@@ -483,7 +483,7 @@ git restore --source=HEAD~2 README.md
 ---
 
 <a name="module-09"></a>
-## Module 09 — Rewriting History
+## Module 09 - Rewriting History
 *Phase: Advanced*
 
 <a name="module-09-amend"></a>
@@ -515,7 +515,7 @@ In the editor that opens, you can change `pick` to:
 ---
 
 <a name="module-10"></a>
-## Module 10 — Tags & Releases
+## Module 10 - Tags & Releases
 *Phase: Release*
 
 Tags are used to mark specific points in history as being important (e.g., v1.0, v2.0).
@@ -546,7 +546,7 @@ git push origin --tags
 ---
 
 <a name="module-11"></a>
-## Module 11 — Submodules & Subtrees
+## Module 11 - Submodules & Subtrees
 *Phase: Advanced*
 
 Sometimes you need to include another Git repository inside your own.
@@ -570,7 +570,7 @@ git submodule update --init --recursive
 ---
 
 <a name="module-12"></a>
-## Module 12 — Git Hooks
+## Module 12 - Git Hooks
 *Phase: Automation*
 
 Hooks are scripts that Git executes before or after events such as `commit`, `push`, and `receive`.
@@ -607,7 +607,7 @@ chmod +x .git/hooks/pre-commit
 ---
 
 <a name="module-13"></a>
-## Module 13 — Advanced Workflows
+## Module 13 - Advanced Workflows
 *Phase: Strategy*
 
 <a name="module-13-gitflow"></a>
@@ -633,7 +633,7 @@ A lightweight, branch-based workflow.
 ---
 
 <a name="module-14"></a>
-## Module 14 — Best Practices & Tips
+## Module 14 - Best Practices & Tips
 *Phase: Professionalism*
 
 <a name="module-14-ignore"></a>
@@ -664,7 +664,7 @@ git config --global alias.lg "log --oneline --graph --decorate --all"
 ---
 
 <a name="module-15"></a>
-## Module 15 — Troubleshooting & Internals
+## Module 15 - Troubleshooting & Internals
 *Phase: Mastery*
 
 <a name="module-15-reflog"></a>
@@ -696,7 +696,7 @@ git bisect reset
 ---
 
 <a name="appendix-a"></a>
-## Appendix A — Top Git Interview Q&A
+## Appendix A - Top Git Interview Q&A
 
 **Q1. What is the difference between `git pull` and `git fetch`?**
 - `git fetch`: Downloads changes from remote but doesn't merge them.
@@ -718,7 +718,7 @@ It temporarily shelves (stashes) changes you've made to your working copy so you
 ---
 
 <a name="appendix-b"></a>
-## Appendix B — Git Commands Cheatsheet
+## Appendix B - Git Commands Cheatsheet
 
 | Category | Command | Description |
 | :--- | :--- | :--- |

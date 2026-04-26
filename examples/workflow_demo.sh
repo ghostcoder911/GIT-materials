@@ -37,13 +37,13 @@ echo "Feature Description" >> README.md
 git add README.md
 git commit -m "docs: add feature description"
 
-# Switch back to main and modify README
-git checkout main
+# Switch back to master and modify README
+git checkout master
 echo "Main Description" >> README.md
 git add README.md
 git commit -m "docs: add main description"
 
-echo "=== 5. Merging Feature into Main (Expect Conflict) ==="
+echo "=== 5. Merging Feature into Master (Expect Conflict) ==="
 set +e # Don't exit on merge conflict
 git merge feat-sensor
 set -e

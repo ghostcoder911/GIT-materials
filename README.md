@@ -30,18 +30,20 @@ Welcome to the **Git Mastery Study Guide** - a comprehensive, hands-on reference
     - [Stashing: Saving Work in Progress](#module-05-stash)
     - [Cleaning: Removing Untracked Files](#module-05-clean)
     - [Foundation Cementing: Context Switching](#module-05-foundation)
-6. [Module 06: Remotes & Collaboration](#module-06)
-7. [Module 07: Inspecting & Comparing](#module-07)
-8. [Module 08: Undoing Changes](#module-08)
-9. [Module 09: Rewriting History](#module-09)
-10. [Module 10: Tags & Releases](#module-10)
-11. [Module 11: Submodules & Subtrees](#module-11)
-12. [Module 12: Git Hooks](#module-12)
-13. [Module 13: Advanced Workflows](#module-13)
-14. [Module 14: Best Practices & Tips](#module-14)
-15. [Module 15: Troubleshooting & Internals](#module-15)
-16. [Appendix A: Top Git Interview Q&A](#appendix-a)
-17. [Appendix B: Git Commands Cheatsheet](#appendix-b)
+6. [Module 06: Git Diff](#module-06)
+7. [Module 07: Undoing](#module-07)
+8. [Module 08: Merging](#module-08)
+9. [Module 09: Submodules](#module-09)
+10. [Module 10: Committing](#module-10)
+11. [Module 11: Aliases](#module-11)
+12. [Module 12: Rebasing](#module-12)
+13. [Module 13: Configuration](#module-13)
+14. [Module 14: Branching](#module-14)
+15. [Module 15: Rev-List](#module-15)
+16. [Module 16: Squashing](#module-16)
+17. [Module 17: Cherry Picking](#module-17)
+18. [Appendix A: Top Git Interview Q&A](#appendix-a)
+19. [Appendix B: Git Commands Cheatsheet](#appendix-b)
 
 ---
 
@@ -364,333 +366,548 @@ git stash pop
 ---
 
 <a name="module-06"></a>
-## Module 06 - Remotes & Collaboration
-*Phase: Collaboration*
+## Module 06 - Git Diff
+*Phase: Inspection*
 
-Remotes are versions of your project that are hosted on the internet or network somewhere.
+`git diff` helps you compare file states across the Working Directory, Staging Area, commits, and branches.
 
-<a name="module-06-clone"></a>
-### Clone, Pull, Push, Fetch
+<a name="module-06-working"></a>
+### Working Directory vs Staging Area
 
 ```bash
-# Clone a repository
-git clone https://github.com/user/repo.git
+# Show unstaged changes
+git diff
 
-# See remotes
-git remote -v
-
-# Add a remote
-git remote add origin https://github.com/user/repo.git
-
-# Fetch changes from remote (doesn't merge)
-git fetch origin
-
-# Pull changes (fetch + merge)
-git pull origin main
-
-# Push changes
-git push origin main
+# Show staged changes
+git diff --staged
 ```
 
-> [!IMPORTANT]
-> **Upstream Branches**: When you push for the first time, use `-u` (or `--set-upstream`) to link your local branch to the remote one. This allows you to just type `git pull` or `git push` later.
-> `git push -u origin main`
+<a name="module-06-compare"></a>
+### Compare Commits, Branches, and Paths
+
+```bash
+# Compare two commits
+git diff <commit1> <commit2>
+
+# Compare branches
+git diff main..feature-x
+
+# Compare current branch with another branch tip
+git diff feature-x
+
+# Diff only one file or directory
+git diff -- src/main.c
+git diff main..feature-x -- include/
+```
+
+<a name="module-06-advanced"></a>
+### Useful Diff Options
+
+```bash
+# Show both staged and unstaged changes against HEAD
+git diff HEAD
+
+# Word-level diff for long lines / prose
+git diff --word-diff
+
+# Output patch-compatible diff
+git diff -p
+```
+
+> [!TIP]
+> Use `git diff --staged` before every commit to verify exactly what will be recorded in history.
 
 ---
 
 <a name="module-07"></a>
-## Module 07 - Inspecting & Comparing
-*Phase: Utility*
+## Module 07 - Undoing
+*Phase: Recovery*
 
-<a name="module-07-show"></a>
-### Show & Blame
+Undo operations depend on whether changes are uncommitted, staged, committed locally, or already shared remotely.
+
+<a name="module-07-unstage"></a>
+### Unstage and Discard Local Changes
 
 ```bash
-# See details of a specific commit
-git show <commit_hash>
+# Unstage a file (keep edits in working directory)
+git reset HEAD README.md
 
-# See who changed what line in a file
-git blame README.md
+# Discard changes in working directory (modern)
+git restore README.md
+
+# Discard all local uncommitted changes
+git reset --hard
 ```
 
-<a name="module-07-log"></a>
-### Advanced Logging
+<a name="module-07-commits"></a>
+### Undo Commits Safely
 
 ```bash
-# See history of a specific file
-git log -- README.md
+# Move branch back one commit, keep changes staged
+git reset --soft HEAD~1
 
-# See history of a specific function (if supported by language)
-git log -L :main:main.c
+# Move branch back one commit, unstage changes
+git reset --mixed HEAD~1
 
-# Search commit messages for a string
-git log --grep="fix"
+# Revert a commit by creating a new opposite commit (safe on shared branches)
+git revert <commit_hash>
+```
 
-# See changes by author
-git log --author="John Doe"
+<a name="module-07-reflog"></a>
+### Recover Mistakes with Reflog
+
+```bash
+# Show recent HEAD movements
+git reflog
+
+# Recover branch to a known good state
+git reset --hard <reflog_hash>
 ```
 
 ---
 
 <a name="module-08"></a>
-## Module 08 - Undoing Changes
-*Phase: Recovery*
+## Module 08 - Merging
+*Phase: Integration*
 
-Git is very good at undoing mistakes. Depending on where the change is (Working Directory, Staging Area, or Repository), there's a command for it.
+Merging combines histories from different branches. Git can auto-merge or stop for manual conflict resolution.
 
-<a name="module-08-reset"></a>
-### Reset (The Power Tool)
-
-`git reset` moves the HEAD pointer and optionally updates the index and working directory.
-
-| Mode | HEAD moves? | Index updates? | Working Dir updates? | Use Case |
-| :--- | :---: | :---: | :---: | :--- |
-| `--soft` | ✅ | ❌ | ❌ | Undo commit, keep changes staged |
-| `--mixed` (default) | ✅ | ✅ | ❌ | Undo commit, unstage changes |
-| `--hard` | ✅ | ✅ | ✅ | **DANGEROUS**: Wipe all changes |
+<a name="module-08-basic"></a>
+### Basic Merge Operations
 
 ```bash
-# Undo last commit, keep changes in staging
-git reset --soft HEAD~1
+# Merge feature branch into current branch
+git switch main
+git merge feature-login
 
-# Unstage a file
-git reset HEAD README.md
+# Force a merge commit even when fast-forward is possible
+git merge --no-ff feature-login
 ```
 
-<a name="module-08-revert"></a>
-### Revert (The Safe Way)
-
-`git revert` creates a **new commit** that does the exact opposite of a previous commit. This is the preferred way to undo changes on shared branches.
+<a name="module-08-conflicts"></a>
+### Conflicts, Abort, and "Ours/Theirs"
 
 ```bash
-git revert <commit_hash>
+# Abort an in-progress merge
+git merge --abort
+
+# Keep current branch version during conflict for one file
+git checkout --ours config.yml
+
+# Keep incoming branch version during conflict for one file
+git checkout --theirs config.yml
+
+# Mark as resolved
+git add config.yml
+git commit
 ```
 
-<a name="module-08-checkout"></a>
-### Checkout/Restore
+<a name="module-08-check"></a>
+### Check Merge Status
 
 ```bash
-# Discard changes in working directory (old Git)
-git checkout -- README.md
+# See merged branches
+git branch --merged
 
-# Discard changes in working directory (modern Git)
-git restore README.md
-
-# Restore a file from a specific commit
-git restore --source=HEAD~2 README.md
+# See not-yet-merged branches
+git branch --no-merged
 ```
 
 ---
 
 <a name="module-09"></a>
-## Module 09 - Rewriting History
-*Phase: Advanced*
+## Module 09 - Submodules
+*Phase: Dependency Management*
 
-<a name="module-09-amend"></a>
-### Amend
+Submodules let one repository track a specific commit of another repository.
 
-Forgot to add a file or made a typo in the commit message?
-
-```bash
-git add forgotten_file.c
-git commit --amend -m "feat: add sensor driver and config"
-```
-
-<a name="module-09-rebase"></a>
-### Interactive Rebase
-
-The "Swiss Army Knife" of Git. It allows you to edit, squash, and reorder commits.
+<a name="module-09-add"></a>
+### Add, Clone, and Init Submodules
 
 ```bash
-# Rebase the last 3 commits
-git rebase -i HEAD~3
+# Add submodule
+git submodule add https://github.com/user/lib.git external/lib
+
+# Clone including submodules
+git clone --recursive https://github.com/user/project.git
+
+# Initialize submodules in an existing clone
+git submodule update --init --recursive
 ```
 
-In the editor that opens, you can change `pick` to:
-- `reword`: Change the commit message.
-- `edit`: Stop for amending.
-- `squash`: Combine this commit with the previous one.
-- `drop`: Remove the commit entirely.
+<a name="module-09-update"></a>
+### Update and Track Branches
+
+```bash
+# Pull latest submodule commits from recorded pointers
+git submodule update --recursive
+
+# Let a submodule track a branch
+git config -f .gitmodules submodule.external/lib.branch main
+git submodule update --remote
+```
+
+<a name="module-09-remove"></a>
+### Remove a Submodule
+
+```bash
+git submodule deinit -f external/lib
+git rm -f external/lib
+rm -rf .git/modules/external/lib
+```
 
 ---
 
 <a name="module-10"></a>
-## Module 10 - Tags & Releases
-*Phase: Release*
+## Module 10 - Committing
+*Phase: Core Workflow*
 
-Tags are used to mark specific points in history as being important (e.g., v1.0, v2.0).
+Commits are snapshots with metadata (author, date, message, parent commit) and should be atomic and meaningful.
 
-<a name="module-10-tags"></a>
-### Lightweight vs Annotated Tags
+<a name="module-10-basic"></a>
+### Stage and Commit Patterns
 
-**Lightweight Tags:** Just a pointer to a commit.
 ```bash
-git tag v1.0-lw
+# Commit staged changes
+git add .
+git commit -m "feat: add uart parser"
+
+# Commit tracked file changes directly
+git commit -a -m "fix: handle null packet"
+
+# Commit only specific files
+git commit src/main.c include/main.h -m "refactor: split parser api"
 ```
 
-**Annotated Tags:** Stored as full objects in the Git database. They contain the tagger name, email, date, and a message. **Always use these for releases.**
+<a name="module-10-amend"></a>
+### Amend, Empty, and Authorship
+
 ```bash
-git tag -a v1.0 -m "Production release v1.0"
+# Amend latest commit
+git commit --amend -m "feat: add uart parser and tests"
+
+# Create an empty commit (useful for CI triggers)
+git commit --allow-empty -m "chore: trigger pipeline"
+
+# Commit as another author
+git commit --author="Jane Doe <jane@example.com>" -m "docs: update guide"
 ```
 
-```bash
-# List tags
-git tag
+<a name="module-10-sign"></a>
+### Signed and Dated Commits
 
-# Push tags to remote (they aren't pushed by default)
-git push origin v1.0
-# OR push all tags
-git push origin --tags
+```bash
+# GPG-sign commit
+git commit -S -m "security: sign release preparation"
+
+# Commit with explicit date
+GIT_AUTHOR_DATE="2026-04-27T10:00:00" \
+GIT_COMMITTER_DATE="2026-04-27T10:00:00" \
+git commit -m "chore: backfill historical commit"
 ```
 
 ---
 
 <a name="module-11"></a>
-## Module 11 - Submodules & Subtrees
-*Phase: Advanced*
+## Module 11 - Aliases
+*Phase: Productivity*
 
-Sometimes you need to include another Git repository inside your own.
+Aliases reduce repetitive typing and encode team-standard command patterns.
 
-<a name="module-11-submodules"></a>
-### Submodules
-
-A submodule is a record in your main repository that points to a specific commit in another repository.
+<a name="module-11-simple"></a>
+### Simple Aliases
 
 ```bash
-# Add a submodule
-git submodule add https://github.com/user/lib.git external/lib
+git config --global alias.st status
+git config --global alias.co checkout
+git config --global alias.br branch
+git config --global alias.cm "commit -m"
+```
 
-# Clone a repo with submodules
-git clone --recursive https://github.com/user/project.git
+<a name="module-11-advanced"></a>
+### Advanced Aliases
 
-# Update submodules
-git submodule update --init --recursive
+```bash
+# Pretty graph log
+git config --global alias.lg "log --oneline --graph --decorate --all"
+
+# Show ignored files
+git config --global alias.ignored "ls-files -v | grep '^[[:lower:]]'"
+
+# Update current branch with linear history
+git config --global alias.up "pull --rebase --autostash"
+```
+
+```bash
+# List aliases
+git config --get-regexp ^alias\\.
 ```
 
 ---
 
 <a name="module-12"></a>
-## Module 12 - Git Hooks
-*Phase: Automation*
+## Module 12 - Rebasing
+*Phase: History Hygiene*
 
-Hooks are scripts that Git executes before or after events such as `commit`, `push`, and `receive`.
+Rebasing replays commits on top of another base commit, producing a cleaner linear history.
 
-<a name="module-12-hooks"></a>
-### Common Hooks
-
-Hooks are stored in `.git/hooks/`.
-
-| Hook | When it runs | Use Case |
-| :--- | :--- | :--- |
-| `pre-commit` | Before commit message is entered | Run linters/tests |
-| `commit-msg` | After message is entered | Enforce message format |
-| `pre-push` | Before pushing to remote | Prevent pushing to main |
-| `post-merge` | After a successful merge | Install dependencies |
+<a name="module-12-local"></a>
+### Local Branch Rebasing
 
 ```bash
-# Example: Create a pre-commit hook to prevent large files
-cat > .git/hooks/pre-commit << 'EOF'
-#!/bin/sh
-# Prevent committing files larger than 5MB
-MAX_SIZE=5242880
-for file in $(git diff --cached --name-only); do
-    size=$(stat -c%s "$file")
-    if [ $size -gt $MAX_SIZE ]; then
-        echo "Error: $file is too large ($size bytes)."
-        exit 1
-    fi
-done
-EOF
-chmod +x .git/hooks/pre-commit
+# Rebase your feature branch on latest main
+git switch feature-x
+git fetch origin
+git rebase origin/main
+```
+
+<a name="module-12-interactive"></a>
+### Interactive Rebase
+
+```bash
+# Rewrite last 4 commits
+git rebase -i HEAD~4
+```
+
+Common actions:
+- `pick`: keep commit
+- `reword`: edit message
+- `edit`: stop and amend commit
+- `squash` / `fixup`: combine commits
+- `drop`: remove commit
+
+<a name="module-12-safe"></a>
+### Abort, Continue, and Push After Rebase
+
+```bash
+# If conflicts occur
+git status
+# resolve conflicts...
+git add <resolved_files>
+git rebase --continue
+
+# Stop and return to pre-rebase state
+git rebase --abort
+
+# Push rewritten history safely
+git push --force-with-lease
 ```
 
 ---
 
 <a name="module-13"></a>
-## Module 13 - Advanced Workflows
-*Phase: Strategy*
+## Module 13 - Configuration
+*Phase: Setup & Environment*
 
-<a name="module-13-gitflow"></a>
-### Git Flow
+Git configuration can be scoped at system, global, and repository levels.
 
-A strict branching model designed around the project release.
-- `main`: Stores official release history.
-- `develop`: Integration branch for features.
-- `feature/*`: For developing new features.
-- `release/*`: For preparing a new production release.
-- `hotfix/*`: For quickly patching production releases.
+<a name="module-13-levels"></a>
+### Config Scopes and Inspection
 
-<a name="module-13-githubflow"></a>
-### GitHub Flow
+```bash
+# List effective configuration
+git config --list
 
-A lightweight, branch-based workflow.
-1. Create a branch from `main`.
-2. Commit changes.
-3. Open a Pull Request (PR).
-4. Discuss and review code.
-5. Merge into `main`.
+# Edit global config
+git config --global --edit
+
+# Set local repo-only values
+git config user.name "Project Specific Name"
+git config user.email "project@example.com"
+```
+
+<a name="module-13-editor"></a>
+### Editor, Autocorrect, Line Endings, Proxy
+
+```bash
+# Set default editor
+git config --global core.editor "code --wait"
+
+# Autocorrect mistyped commands after delay (tenths of a second)
+git config --global help.autocorrect 10
+
+# Line endings (cross-platform team setup)
+git config --global core.autocrlf input
+
+# Configure proxy
+git config --global http.proxy http://proxy.example.com:8080
+```
+
+<a name="module-13-once"></a>
+### One-Time Config for Single Command
+
+```bash
+git -c user.name="Temp User" -c user.email="temp@example.com" commit -m "hotfix"
+```
 
 ---
 
 <a name="module-14"></a>
-## Module 14 - Best Practices & Tips
-*Phase: Professionalism*
+## Module 14 - Branching
+*Phase: Workflow*
 
-<a name="module-14-ignore"></a>
-### .gitignore
+Branches are movable pointers to commits, enabling parallel development.
 
-Always exclude build artifacts, temporary files, and sensitive data.
+<a name="module-14-create"></a>
+### Create, List, Switch, Rename
 
 ```bash
-# .gitignore example
-node_modules/
-dist/
-*.log
-.env
+# Create branch
+git branch feature-auth
+
+# Create and switch
+git switch -c feature-auth
+
+# List branches
+git branch
+git branch -a
+
+# Rename current branch
+git branch -m feat/auth-flow
 ```
 
-<a name="module-14-aliases"></a>
-### Aliases
-
-Save time by creating shortcuts for common commands.
+<a name="module-14-remote"></a>
+### Tracking and Remote Branch Management
 
 ```bash
-git config --global alias.co checkout
-git config --global alias.br branch
-git config --global alias.st status
-git config --global alias.lg "log --oneline --graph --decorate --all"
+# Track remote branch
+git switch --track origin/feature-auth
+
+# Push and set upstream
+git push -u origin feature-auth
+
+# Delete remote branch
+git push origin --delete feature-auth
+```
+
+<a name="module-14-delete"></a>
+### Delete and Special Branch Types
+
+```bash
+# Delete merged local branch
+git branch -d feature-auth
+
+# Force delete unmerged branch
+git branch -D spike-temp
+
+# Create orphan branch (no parent history)
+git switch --orphan gh-pages
 ```
 
 ---
 
 <a name="module-15"></a>
-## Module 15 - Troubleshooting & Internals
-*Phase: Mastery*
+## Module 15 - Rev-List
+*Phase: Inspection*
 
-<a name="module-15-reflog"></a>
-### Reflog (The Safety Net)
+`git rev-list` is a low-level command for enumerating commits in reverse chronological order with fine control.
 
-Git keeps a log of where your HEAD has been. If you accidentally `git reset --hard` and lose commits, `reflog` can save you.
+<a name="module-15-ranges"></a>
+### Commit Range Queries
 
 ```bash
-git reflog
-# Find the commit hash before the mistake
-git reset --hard <hash>
+# Commits in local main but not in origin/main
+git rev-list origin/main..main
+
+# Commits in branch-a but not branch-b
+git rev-list branch-b..branch-a
 ```
 
-<a name="module-15-bisect"></a>
-### Bisect (Finding Bugs)
-
-Git bisect uses binary search to find the exact commit that introduced a bug.
+<a name="module-15-count"></a>
+### Count and Filter
 
 ```bash
-git bisect start
-git bisect bad                 # Current version is bad
-git bisect good v1.0           # v1.0 was good
-# Git will checkout a middle commit. Test it.
-git bisect good                # If it's good
-# ... repeat until Git finds the culprit ...
-git bisect reset
+# Count ahead commits
+git rev-list --count origin/main..main
+
+# Show only merge commits in range
+git rev-list --merges main..feature-x
+```
+
+---
+
+<a name="module-16"></a>
+## Module 16 - Squashing
+*Phase: History Cleanup*
+
+Squashing combines multiple commits into one, improving readability before sharing or merging.
+
+<a name="module-16-rebase"></a>
+### Squash with Interactive Rebase
+
+```bash
+# Squash the latest 3 commits
+git rebase -i HEAD~3
+```
+
+In the editor:
+- Keep first commit as `pick`
+- Change next commits to `squash` or `fixup`
+- Save and combine commit messages as needed
+
+<a name="module-16-merge"></a>
+### Squash During Merge
+
+```bash
+# On main, squash-merge a feature branch
+git switch main
+git merge --squash feature-ui
+git commit -m "feat: add complete ui feature set"
+```
+
+<a name="module-16-fixup"></a>
+### Autosquash with Fixup Commits
+
+```bash
+# Create fixup commit targeted to an older commit
+git commit --fixup <target_commit>
+
+# Rebase with autosquash enabled
+git rebase -i --autosquash HEAD~5
+```
+
+---
+
+<a name="module-17"></a>
+## Module 17 - Cherry Picking
+*Phase: Selective Integration*
+
+Cherry-pick applies specific commit(s) from one branch onto another without merging full branch history.
+
+<a name="module-17-single"></a>
+### Pick Single or Multiple Commits
+
+```bash
+# Pick one commit
+git cherry-pick <commit_hash>
+
+# Pick a range (inclusive start, exclusive end style with ^)
+git cherry-pick <oldest_commit>^..<newest_commit>
+```
+
+<a name="module-17-workflow"></a>
+### Conflict Handling During Cherry-Pick
+
+```bash
+# If conflict occurs
+git status
+# resolve files...
+git add <resolved_files>
+git cherry-pick --continue
+
+# Abort if needed
+git cherry-pick --abort
+```
+
+<a name="module-17-check"></a>
+### Check if Cherry-Pick Is Needed
+
+```bash
+# Show commits in feature-x not yet in main
+git log main..feature-x --oneline
+
+# Equivalent patch-id comparison helper
+git cherry -v main feature-x
 ```
 
 ---
